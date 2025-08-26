@@ -7,12 +7,12 @@ const router = express.Router();
 // Public routes
 router.post('/register', AuthController.register);
 router.post('/login', AuthController.login);
+router.post('/refresh-token', AuthController.refreshToken); // make this public
 
-// Protected routes (require authentication)
+// Protected routes
 router.use(authMiddleware);
 router.get('/profile', AuthController.getProfile);
 router.put('/profile', AuthController.updateProfile);
 router.delete('/account', AuthController.deleteAccount);
-router.post('/refresh-token', AuthController.refreshToken);
 
 module.exports = router;

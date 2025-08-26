@@ -1,4 +1,4 @@
-const AuthService = require('../task-manager-api/services/authService');
+const AuthService = require('../services/authService');
 
 class AuthController {
   static async register(req, res) {

@@ -1,11 +1,14 @@
 const AuthService = require('../services/authService');
+const logger = require('../config/logger');
 
 class AuthController {
-  static async register(req, res) {
+  static async signup(req, res) {
     try {
       const { username, email, password } = req.body;
       
-      const result = await AuthService.register({ username, email, password });
+      const result = await AuthService.signup({ username, email, password });
+      
+      logger.info('User registered successfully', { email });
       
       res.status(201).json({
         success: true,
@@ -16,6 +19,7 @@ class AuthController {
         }
       });
     } catch (error) {
+      logger.error('Registration failed:', error);
       res.status(400).json({
         success: false,
         message: error.message
@@ -25,9 +29,20 @@ class AuthController {
 
   static async login(req, res) {
     try {
-      const { identifier, password } = req.body;
+      const { username, email, password } = req.body;
+      
+      // Allow login with either username or email
+      const identifier = username || email;
+      if (!identifier) {
+        return res.status(400).json({
+          success: false,
+          message: 'Username or email is required'
+        });
+      }
       
       const result = await AuthService.login(identifier, password);
+      
+      logger.info('User logged in successfully', { identifier });
       
       res.json({
         success: true,
@@ -38,90 +53,8 @@ class AuthController {
         }
       });
     } catch (error) {
+      logger.error('Login failed:', error);
       res.status(401).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
-
-  static async getProfile(req, res) {
-    try {
-      const userId = req.user.userId;
-      const user = await AuthService.getUserById(userId);
-      
-      res.json({
-        success: true,
-        data: {
-          user
-        }
-      });
-    } catch (error) {
-      res.status(404).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
-
-  static async updateProfile(req, res) {
-    try {
-      const userId = req.user.userId;
-      const updateData = req.body;
-      
-      const user = await AuthService.updateUser(userId, updateData);
-      
-      res.json({
-        success: true,
-        message: 'Profile updated successfully',
-        data: {
-          user
-        }
-      });
-    } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
-
-  static async deleteAccount(req, res) {
-    try {
-      const userId = req.user.userId;
-      
-      await AuthService.deleteUser(userId);
-      
-      res.json({
-        success: true,
-        message: 'Account deleted successfully'
-      });
-    } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
-
-  static async refreshToken(req, res) {
-    try {
-      const userId = req.user.userId;
-      
-      // Generate new token
-      const token = AuthService.generateToken(userId);
-      const user = await AuthService.getUserById(userId);
-      
-      res.json({
-        success: true,
-        message: 'Token refreshed successfully',
-        data: {
-          user,
-          token
-        }
-      });
-    } catch (error) {
-      res.status(400).json({
         success: false,
         message: error.message
       });

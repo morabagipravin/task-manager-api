@@ -1,0 +1,144 @@
+{
+  "info": {
+    "name": "Task Manager API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Signup",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Create Task",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/tasks",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"My Task\",\n  \"description\": \"Do something\",\n  \"dueDate\": \"2025-09-01\",\n  \"status\": \"pending\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Create Task with Files",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/tasks",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "title", "value": "Task with Files", "type": "text" },
+            { "key": "description", "value": "This task has attached files", "type": "text" },
+            { "key": "dueDate", "value": "2025-09-01", "type": "text" },
+            { "key": "status", "value": "pending", "type": "text" },
+            { "key": "files", "type": "file", "src": [] }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Tasks (with cursor)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/tasks?cursor=1&limit=5"
+      }
+    },
+    {
+      "name": "Get Tasks by Status",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/tasks?status=pending&limit=10"
+      }
+    },
+    {
+      "name": "Get Task by ID",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/tasks/1"
+      }
+    },
+    {
+      "name": "Update Task",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/tasks/1",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"completed\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Update Task with Files",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/tasks/1",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "title", "value": "Updated Task Title", "type": "text" },
+            { "key": "description", "value": "Updated description", "type": "text" },
+            { "key": "files", "type": "file", "src": [] }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Download File",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/tasks/1/files/filename.pdf"
+      }
+    },
+    {
+      "name": "Delete Task",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/tasks/1"
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" }
+  ]
+} 

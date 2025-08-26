@@ -1,12 +1,12 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const UserModel = require('../models/userModel');
+const db = require('../config/db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
+const JWT_EXPIRES_IN = '1h'; // 1 hour expiry as per requirements
 
 class AuthService {
-  static async register(userData) {
+  static async signup(userData) {
     const { username, email, password } = userData;
     
     // Basic validation
@@ -19,7 +19,7 @@ class AuthService {
     }
     
     // Check if user already exists
-    const existingUser = await UserModel.findByEmailOrUsername(email);
+    const existingUser = await this.findByEmailOrUsername(email, username);
     if (existingUser) {
       throw new Error('User with this email or username already exists');
     }
@@ -29,17 +29,18 @@ class AuthService {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     
     // Create user
-    const userId = await UserModel.create({
-      username,
-      email,
-      password: hashedPassword
-    });
+    const [result] = await db.execute(
+      'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
+      [username, email, hashedPassword]
+    );
+    
+    const userId = result.insertId;
     
     // Generate JWT token
     const token = this.generateToken(userId);
     
     // Get user data without password
-    const user = await UserModel.findById(userId);
+    const user = await this.findById(userId);
     
     return { user, token };
   }
@@ -51,7 +52,7 @@ class AuthService {
     }
     
     // Find user by email or username
-    const user = await UserModel.findByEmailOrUsername(identifier);
+    const user = await this.findByEmailOrUsername(identifier);
     if (!user) {
       throw new Error('Invalid credentials');
     }
@@ -83,40 +84,20 @@ class AuthService {
     }
   }
 
-  static async getUserById(userId) {
-    const user = await UserModel.findById(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
-    return user;
+  static async findById(userId) {
+    const [rows] = await db.execute(
+      'SELECT id, username, email, createdAt, updatedAt FROM users WHERE id = ?',
+      [userId]
+    );
+    return rows[0] || null;
   }
 
-  static async updateUser(userId, updateData) {
-    const { password, ...otherData } = updateData;
-    
-    // If password is being updated, hash it
-    if (password) {
-      if (password.length < 6) {
-        throw new Error('Password must be at least 6 characters long');
-      }
-      const saltRounds = 10;
-      otherData.password = await bcrypt.hash(password, saltRounds);
-    }
-    
-    const updated = await UserModel.update(userId, otherData);
-    if (!updated) {
-      throw new Error('Failed to update user');
-    }
-    
-    return await UserModel.findById(userId);
-  }
-
-  static async deleteUser(userId) {
-    const deleted = await UserModel.delete(userId);
-    if (!deleted) {
-      throw new Error('Failed to delete user');
-    }
-    return true;
+  static async findByEmailOrUsername(identifier) {
+    const [rows] = await db.execute(
+      'SELECT id, username, email, password, createdAt, updatedAt FROM users WHERE email = ? OR username = ?',
+      [identifier, identifier]
+    );
+    return rows[0] || null;
   }
 }
 

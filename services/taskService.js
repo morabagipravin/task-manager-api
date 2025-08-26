@@ -1,9 +1,9 @@
-const TaskModel = require('../models/taskModel');
+const db = require('../config/db');
 const path = require('path');
 const fs = require('fs').promises;
 
 class TaskService {
-  static async createTask(userId, taskData, file = null) {
+  static async createTask(userId, taskData, files = []) {
     const { title, description, dueDate, status } = taskData;
     
     // Basic validation
@@ -25,23 +25,35 @@ class TaskService {
       }
     }
     
-    // Handle file upload
-    let filePath = null;
-    if (file) {
-      filePath = file.path;
+    // Handle file uploads
+    let filePaths = [];
+    if (files && files.length > 0) {
+      filePaths = files.map(file => file.path);
     }
     
     // Create task
-    const taskId = await TaskModel.create({
-      title: title.trim(),
-      description: description?.trim() || null,
-      dueDate: dueDate || null,
-      status: status || 'pending',
-      filePath,
-      userId
-    });
+    const [result] = await db.execute(
+      'INSERT INTO tasks (userId, title, description, dueDate, status, filePaths) VALUES (?, ?, ?, ?, ?, ?)',
+      [
+        userId,
+        title.trim(),
+        description?.trim() || null,
+        dueDate || null,
+        status || 'pending',
+        JSON.stringify(filePaths)
+      ]
+    );
     
-    return await TaskModel.findById(taskId, userId);
+    const taskId = result.insertId;
+    return await this.findById(taskId, userId);
+  }
+
+  static async findById(taskId, userId) {
+    const [rows] = await db.execute(
+      'SELECT id, userId, title, description, dueDate, status, filePaths, createdAt, updatedAt FROM tasks WHERE id = ? AND userId = ?',
+      [taskId, userId]
+    );
+    return rows[0] || null;
   }
 
   static async getTaskById(userId, taskId) {
@@ -49,23 +61,21 @@ class TaskService {
       throw new Error('Invalid task ID');
     }
     
-    const task = await TaskModel.findById(taskId, userId);
+    const task = await this.findById(taskId, userId);
     if (!task) {
       throw new Error('Task not found');
+    }
+    
+    // Parse filePaths JSON
+    if (task.filePaths) {
+      task.filePaths = JSON.parse(task.filePaths);
     }
     
     return task;
   }
 
   static async getUserTasks(userId, options = {}) {
-    const { 
-      limit = 10, 
-      cursor, 
-      status, 
-      page = 1,
-      sortBy = 'created_at',
-      sortOrder = 'DESC'
-    } = options;
+    const { limit = 10, cursor, status } = options;
     
     // Validate limit
     const parsedLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
@@ -75,65 +85,62 @@ class TaskService {
       throw new Error('Status must be either "pending" or "completed"');
     }
     
-    let tasks;
-    let totalCount;
+    let query = 'SELECT id, userId, title, description, dueDate, status, filePaths, createdAt, updatedAt FROM tasks WHERE userId = ?';
+    let params = [userId];
+    
+    // Add status filter
+    if (status) {
+      query += ' AND status = ?';
+      params.push(status);
+    }
+    
+    // Add cursor-based pagination
+    if (cursor) {
+      query += ' AND id > ?';
+      params.push(cursor);
+    }
+    
+    // Add ordering and limit
+    query += ' ORDER BY id ASC LIMIT ?';
+    params.push(parsedLimit + 1); // Get one extra to check if there are more
+    
+    const [rows] = await db.execute(query, params);
+    
+    let tasks = rows;
     let hasMore = false;
     
-    if (cursor) {
-      // Cursor-based pagination
-      tasks = await TaskModel.findByUserId(userId, { 
-        limit: parsedLimit + 1, 
-        cursor, 
-        status 
-      });
-      
-      if (tasks.length > parsedLimit) {
-        hasMore = true;
-        tasks = tasks.slice(0, parsedLimit);
-      }
-      
-      const nextCursor = tasks.length > 0 ? tasks[tasks.length - 1].id : null;
-      
-      return {
-        tasks,
-        pagination: {
-          hasMore,
-          nextCursor: hasMore ? nextCursor : null
-        }
-      };
-    } else {
-      // Page-based pagination
-      tasks = await TaskModel.getUserTasks(userId, {
-        page,
-        limit: parsedLimit,
-        status,
-        sortBy,
-        sortOrder
-      });
-      
-      totalCount = await TaskModel.getTasksCount(userId, status);
-      const totalPages = Math.ceil(totalCount / parsedLimit);
-      
-      return {
-        tasks,
-        pagination: {
-          page: parseInt(page),
-          limit: parsedLimit,
-          totalPages,
-          totalCount,
-          hasMore: page < totalPages
-        }
-      };
+    // Check if there are more results
+    if (tasks.length > parsedLimit) {
+      hasMore = true;
+      tasks = tasks.slice(0, parsedLimit);
     }
+    
+    // Parse filePaths JSON for each task
+    tasks = tasks.map(task => {
+      if (task.filePaths) {
+        task.filePaths = JSON.parse(task.filePaths);
+      }
+      return task;
+    });
+    
+    const nextCursor = tasks.length > 0 ? tasks[tasks.length - 1].id : null;
+    
+    return {
+      tasks,
+      pagination: {
+        hasMore,
+        nextCursor: hasMore ? nextCursor : null
+      }
+    };
   }
 
-  static async updateTask(userId, taskId, updateData, file = null) {
+  static async updateTask(userId, taskId, updateData, files = []) {
     if (!taskId || isNaN(taskId)) {
       throw new Error('Invalid task ID');
     }
     
     // Check if task exists and belongs to user
-    const existingTask = await TaskModel.findById(taskId, userId);
+    const existingTask = await this.findById(taskId, userId);
     if (!existingTask) {
       throw new Error('Task not found');
     }
@@ -173,27 +180,51 @@ class TaskService {
       updatedData.status = status;
     }
     
-    // Handle file upload
-    if (file) {
-      // Delete old file if exists
-      if (existingTask.file_path) {
-        try {
-          await fs.unlink(existingTask.file_path);
-        } catch (error) {
-          // File might not exist, continue
-          console.warn('Could not delete old file:', error.message);
+    // Handle file uploads
+    if (files && files.length > 0) {
+      // Delete old files if they exist
+      if (existingTask.filePaths) {
+        const oldFilePaths = JSON.parse(existingTask.filePaths);
+        for (const filePath of oldFilePaths) {
+          try {
+            await fs.unlink(filePath);
+          } catch (error) {
+            // File might not exist, continue
+            console.warn('Could not delete old file:', error.message);
+          }
         }
       }
-      updatedData.filePath = file.path;
+      
+      // Add new file paths
+      const newFilePaths = files.map(file => file.path);
+      updatedData.filePaths = JSON.stringify(newFilePaths);
     }
     
-    // Update task
-    const updated = await TaskModel.update(taskId, userId, updatedData);
-    if (!updated) {
+    // Build update query
+    const updateFields = [];
+    const updateParams = [];
+    
+    Object.keys(updatedData).forEach(key => {
+      updateFields.push(`${key} = ?`);
+      updateParams.push(updatedData[key]);
+    });
+    
+    if (updateFields.length === 0) {
+      throw new Error('No valid fields to update');
+    }
+    
+    updateParams.push(taskId, userId);
+    
+    const [result] = await db.execute(
+      `UPDATE tasks SET ${updateFields.join(', ')} WHERE id = ? AND userId = ?`,
+      updateParams
+    );
+    
+    if (result.affectedRows === 0) {
       throw new Error('Failed to update task');
     }
     
-    return await TaskModel.findById(taskId, userId);
+    return await this.findById(taskId, userId);
   }
 
   static async deleteTask(userId, taskId) {
@@ -202,40 +233,47 @@ class TaskService {
     }
     
     // Check if task exists and belongs to user
-    const task = await TaskModel.findById(taskId, userId);
+    const task = await this.findById(taskId, userId);
     if (!task) {
       throw new Error('Task not found');
     }
     
-    // Delete associated file if exists
-    if (task.file_path) {
-      try {
-        await fs.unlink(task.file_path);
-      } catch (error) {
-        // File might not exist, continue with task deletion
-        console.warn('Could not delete task file:', error.message);
+    // Delete associated files if they exist
+    if (task.filePaths) {
+      const filePaths = JSON.parse(task.filePaths);
+      for (const filePath of filePaths) {
+        try {
+          await fs.unlink(filePath);
+        } catch (error) {
+          // File might not exist, continue with task deletion
+          console.warn('Could not delete task file:', error.message);
+        }
       }
     }
     
-    // Delete task
-    const deleted = await TaskModel.delete(taskId, userId);
-    if (!deleted) {
+    // Delete task (hard delete)
+    const [result] = await db.execute(
+      'DELETE FROM tasks WHERE id = ? AND userId = ?',
+      [taskId, userId]
+    );
+    
+    if (result.affectedRows === 0) {
       throw new Error('Failed to delete task');
     }
     
     return true;
   }
 
-  static async getTaskStats(userId) {
-    const totalTasks = await TaskModel.getTasksCount(userId);
-    const pendingTasks = await TaskModel.getTasksCount(userId, 'pending');
-    const completedTasks = await TaskModel.getTasksCount(userId, 'completed');
+  static async getTaskFilePath(userId, taskId, fileName) {
+    const task = await this.findById(taskId, userId);
+    if (!task || !task.filePaths) {
+      return null;
+    }
     
-    return {
-      total: totalTasks,
-      pending: pendingTasks,
-      completed: completedTasks
-    };
+    const filePaths = JSON.parse(task.filePaths);
+    const filePath = filePaths.find(path => path.includes(fileName));
+    
+    return filePath || null;
   }
 }
 

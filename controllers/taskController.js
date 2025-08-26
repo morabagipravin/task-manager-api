@@ -1,13 +1,16 @@
 const TaskService = require('../services/taskService');
+const logger = require('../config/logger');
 
 class TaskController {
   static async createTask(req, res) {
     try {
       const userId = req.user.userId;
       const taskData = req.body;
-      const file = req.file;
+      const files = req.files; // Multiple files
       
-      const task = await TaskService.createTask(userId, taskData, file);
+      const task = await TaskService.createTask(userId, taskData, files);
+      
+      logger.info('Task created successfully', { userId, taskId: task.id });
       
       res.status(201).json({
         success: true,
@@ -17,6 +20,7 @@ class TaskController {
         }
       });
     } catch (error) {
+      logger.error('Task creation failed:', error);
       res.status(400).json({
         success: false,
         message: error.message
@@ -27,16 +31,11 @@ class TaskController {
   static async getTasks(req, res) {
     try {
       const userId = req.user.userId;
-      const options = {
-        limit: req.query.limit,
-        cursor: req.query.cursor,
-        status: req.query.status,
-        page: req.query.page,
-        sortBy: req.query.sortBy,
-        sortOrder: req.query.sortOrder
-      };
+      const { cursor, limit = 10, status } = req.query;
       
-      const result = await TaskService.getUserTasks(userId, options);
+      const result = await TaskService.getUserTasks(userId, { cursor, limit, status });
+      
+      logger.info('Tasks retrieved successfully', { userId, count: result.tasks.length });
       
       res.json({
         success: true,
@@ -44,6 +43,7 @@ class TaskController {
         data: result
       });
     } catch (error) {
+      logger.error('Task retrieval failed:', error);
       res.status(400).json({
         success: false,
         message: error.message
@@ -66,6 +66,7 @@ class TaskController {
         }
       });
     } catch (error) {
+      logger.error('Task retrieval failed:', error);
       res.status(404).json({
         success: false,
         message: error.message
@@ -78,9 +79,11 @@ class TaskController {
       const userId = req.user.userId;
       const taskId = req.params.id;
       const updateData = req.body;
-      const file = req.file;
+      const files = req.files; // Multiple files
       
-      const task = await TaskService.updateTask(userId, taskId, updateData, file);
+      const task = await TaskService.updateTask(userId, taskId, updateData, files);
+      
+      logger.info('Task updated successfully', { userId, taskId });
       
       res.json({
         success: true,
@@ -90,6 +93,7 @@ class TaskController {
         }
       });
     } catch (error) {
+      logger.error('Task update failed:', error);
       res.status(400).json({
         success: false,
         message: error.message
@@ -104,33 +108,15 @@ class TaskController {
       
       await TaskService.deleteTask(userId, taskId);
       
+      logger.info('Task deleted successfully', { userId, taskId });
+      
       res.json({
         success: true,
         message: 'Task deleted successfully'
       });
     } catch (error) {
+      logger.error('Task deletion failed:', error);
       res.status(404).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
-
-  static async getTaskStats(req, res) {
-    try {
-      const userId = req.user.userId;
-      
-      const stats = await TaskService.getTaskStats(userId);
-      
-      res.json({
-        success: true,
-        message: 'Task statistics retrieved successfully',
-        data: {
-          stats
-        }
-      });
-    } catch (error) {
-      res.status(500).json({
         success: false,
         message: error.message
       });
@@ -141,30 +127,38 @@ class TaskController {
     try {
       const userId = req.user.userId;
       const taskId = req.params.id;
+      const fileName = req.query.file; // Get filename from query parameter
       
-      const task = await TaskService.getTaskById(userId, taskId);
-      
-      if (!task.file_path) {
-        return res.status(404).json({
+      if (!fileName) {
+        return res.status(400).json({
           success: false,
-          message: 'No file attached to this task'
+          message: 'File name is required as query parameter'
         });
       }
-
-      const fs = require('fs');
-      const path = require('path');
       
-      if (!fs.existsSync(task.file_path)) {
+      const filePath = await TaskService.getTaskFilePath(userId, taskId, fileName);
+      
+      if (!filePath) {
         return res.status(404).json({
           success: false,
           message: 'File not found'
         });
       }
 
-      const fileName = path.basename(task.file_path);
-      res.download(task.file_path, fileName);
+      const fs = require('fs');
+      const path = require('path');
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({
+          success: false,
+          message: 'File not found on server'
+        });
+      }
+
+      res.download(filePath, fileName);
       
     } catch (error) {
+      logger.error('File download failed:', error);
       res.status(404).json({
         success: false,
         message: error.message

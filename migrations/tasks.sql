@@ -1,0 +1,13 @@
+-- Create tasks table
+CREATE TABLE IF NOT EXISTS tasks (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  title VARCHAR(100) NOT NULL,
+  description TEXT,
+  dueDate DATE,
+  status ENUM('pending', 'completed') DEFAULT 'pending',
+  filePaths JSON,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+); 

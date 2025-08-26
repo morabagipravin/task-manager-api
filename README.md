@@ -5,14 +5,14 @@ A comprehensive REST API for task management with JWT authentication, file uploa
 ## Features
 
 - 🔐 **JWT Authentication** (1-hour token expiry)
-- 👤 **User Management** (register, login, profile management)
-- 📝 **Task Management** (CRUD operations with file attachments)
-- 📄 **File Uploads** (using Multer with 10MB limit)
-- 🔍 **Cursor-based & Page-based Pagination**
-- 📊 **Task Statistics**
+- 👤 **User Management** (signup, login)
+- 📝 **Task Management** (CRUD operations with multiple file attachments)
+- 📄 **File Uploads** (using Multer with 5MB limit per file, max 5 files)
+- 🔍 **Cursor-based Pagination**
 - 🛡️ **Password Hashing** (bcryptjs)
-- 🗄️ **MySQL Database** with plain queries
+- 🗄️ **MySQL Database** with plain SQL queries
 - ✅ **Input Validation**
+- 📝 **Winston Logging**
 
 ## Tech Stack
 
@@ -22,36 +22,35 @@ A comprehensive REST API for task management with JWT authentication, file uploa
 - **Authentication**: JWT (jsonwebtoken)
 - **Password Hashing**: bcryptjs
 - **File Uploads**: Multer
+- **Logging**: Winston
 - **CORS**: cors middleware
 
 ## Project Structure
 
 ```
 task-manager-api/
-│── package.json
-│── server.js
-│── config/
-│   └── db.js                 # Database connection
-│── migrations/
-│   └── create_tables.sql     # Database schema
-│── models/
-│   ├── userModel.js         # User data access layer
-│   └── taskModel.js         # Task data access layer
-│── services/
-│   ├── authService.js       # Authentication business logic
-│   └── taskService.js       # Task business logic
-│── controllers/
-│   ├── authController.js    # Auth request handlers
-│   └── taskController.js    # Task request handlers
-│── routes/
-│   ├── authRoutes.js        # Auth endpoints
-│   └── taskRoutes.js        # Task endpoints
-│── middleware/
-│   └── authMiddleware.js    # JWT authentication middleware
-│── uploads/                 # File storage directory
-│── utils/
-│   └── fileHandler.js       # File upload utilities
-│── README.md
+├── controllers/
+│   ├── authController.js
+│   ├── taskController.js
+├── services/
+│   ├── authService.js
+│   ├── taskService.js
+├── middlewares/
+│   ├── authMiddleware.js
+├── routes/
+│   ├── authRoutes.js
+│   ├── taskRoutes.js
+├── config/
+│   ├── db.js
+│   ├── logger.js
+├── migrations/
+│   ├── users.sql
+│   ├── tasks.sql
+├── uploads/
+├── app.js
+├── package.json
+├── .env
+├── README.md
 ```
 
 ## Installation & Setup
@@ -69,30 +68,32 @@ npm install
 Create a `.env` file in the root directory:
 
 ```env
-# Database Configuration
 DB_HOST=localhost
 DB_USER=root
-DB_PASSWORD=your_password
+DB_PASS=yourpassword
 DB_NAME=task_manager
-
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key
-JWT_EXPIRES_IN=1h
-
-# Server Configuration
+JWT_SECRET=your_jwt_secret
 PORT=3000
 ```
 
 ### 3. Database Setup
 
-#### Option A: Run SQL Script
+#### Run SQL Migration Scripts
+
+1. **Create users table:**
 ```bash
-mysql -u root -p < migrations/create_tables.sql
+mysql -u root -p < migrations/users.sql
 ```
 
-#### Option B: Manual Setup
+2. **Create tasks table:**
+```bash
+mysql -u root -p < migrations/tasks.sql
+```
+
+#### Manual Setup
 1. Create database: `CREATE DATABASE task_manager;`
-2. Run the SQL commands from `migrations/create_tables.sql`
+2. Run the SQL commands from `migrations/users.sql`
+3. Run the SQL commands from `migrations/tasks.sql`
 
 ### 4. Start the Server
 
@@ -110,8 +111,8 @@ Server will run on `http://localhost:3000`
 
 ### Authentication Endpoints
 
-#### 1. Register User
-**POST** `/api/auth/register`
+#### 1. Signup User
+**POST** `/auth/signup`
 
 ```json
 {
@@ -131,7 +132,8 @@ Server will run on `http://localhost:3000`
       "id": 1,
       "username": "johndoe",
       "email": "john@example.com",
-      "created_at": "2024-01-01T00:00:00.000Z"
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
   }
@@ -139,232 +141,148 @@ Server will run on `http://localhost:3000`
 ```
 
 #### 2. Login User
-**POST** `/api/auth/login`
+**POST** `/auth/login`
 
 ```json
 {
-  "identifier": "john@example.com",
+  "email": "john@example.com",
   "password": "password123"
 }
 ```
 
-*Note: identifier can be either email or username*
-
-#### 3. Get User Profile
-**GET** `/api/auth/profile`
-
-*Headers: Authorization: Bearer <token>*
-
-#### 4. Update Profile
-**PUT** `/api/auth/profile`
-
-```json
-{
-  "username": "johnsmith",
-  "email": "johnsmith@example.com"
-}
-```
-
-#### 5. Delete Account
-**DELETE** `/api/auth/account`
-
-#### 6. Refresh Token
-**POST** `/api/auth/refresh-token`
+*Note: You can also use username instead of email*
 
 ### Task Management Endpoints
 
 *All task endpoints require authentication header: `Authorization: Bearer <token>`*
 
 #### 1. Create Task
-**POST** `/api/tasks`
+**POST** `/tasks`
 
-**Form Data:**
+**JSON Body:**
+```json
+{
+  "title": "Complete project documentation",
+  "description": "Write comprehensive API documentation",
+  "dueDate": "2024-12-31",
+  "status": "pending"
+}
+```
+
+**Form Data (with files):**
 ```
 title: "Complete project documentation"
 description: "Write comprehensive API documentation"
 dueDate: "2024-12-31"
 status: "pending"
-file: [file upload]
+files: [file1, file2, ...] (max 5 files)
 ```
 
-#### 2. Get All Tasks (Paginated)
-**GET** `/api/tasks`
-
-**Query Parameters:**
-- `page`: Page number (default: 1)
-- `limit`: Items per page (max: 100, default: 10)
-- `status`: Filter by status (`pending` or `completed`)
-- `sortBy`: Sort field (`id`, `title`, `due_date`, `status`, `created_at`, `updated_at`)
-- `sortOrder`: Sort direction (`ASC` or `DESC`)
-
-**Example:** `/api/tasks?page=1&limit=5&status=pending&sortBy=due_date&sortOrder=ASC`
-
-#### 3. Get All Tasks (Cursor-based Pagination)
-**GET** `/api/tasks`
+#### 2. Get All Tasks (Cursor-based Pagination)
+**GET** `/tasks`
 
 **Query Parameters:**
 - `cursor`: Last task ID from previous page
 - `limit`: Items per page (max: 100, default: 10)
-- `status`: Filter by status
+- `status`: Filter by status (`pending` or `completed`)
 
-**Example:** `/api/tasks?cursor=25&limit=10&status=completed`
-
-#### 4. Get Single Task
-**GET** `/api/tasks/:id`
-
-#### 5. Update Task
-**PUT** `/api/tasks/:id`
-
-**Form Data:**
-```
-title: "Updated task title"
-description: "Updated description"
-status: "completed"
-file: [new file upload - optional]
-```
-
-#### 6. Delete Task
-**DELETE** `/api/tasks/:id`
-
-#### 7. Get Task Statistics
-**GET** `/api/tasks/stats`
+**Example:** `/tasks?cursor=25&limit=10&status=completed`
 
 **Response:**
 ```json
 {
   "success": true,
+  "message": "Tasks retrieved successfully",
   "data": {
-    "stats": {
-      "total": 25,
-      "pending": 15,
-      "completed": 10
+    "tasks": [...],
+    "pagination": {
+      "hasMore": true,
+      "nextCursor": 35
     }
   }
 }
 ```
 
-#### 8. Download Task File
-**GET** `/api/tasks/:id/download`
+#### 3. Get Single Task
+**GET** `/tasks/:id`
 
-## Postman Examples
+#### 4. Update Task
+**PUT** `/tasks/:id`
 
-### 1. Register User
-
-```
-POST http://localhost:3000/api/auth/register
-Content-Type: application/json
-
+**JSON Body:**
+```json
 {
-  "username": "testuser",
-  "email": "test@example.com",
-  "password": "password123"
+  "title": "Updated task title",
+  "description": "Updated description",
+  "status": "completed"
 }
 ```
 
-### 2. Login User
-
+**Form Data (with files):**
 ```
-POST http://localhost:3000/api/auth/login
-Content-Type: application/json
-
-{
-  "identifier": "test@example.com",
-  "password": "password123"
-}
+title: "Updated task title"
+description: "Updated description"
+status: "completed"
+files: [file1, file2, ...] (max 5 files)
 ```
 
-### 3. Create Task with File
+#### 5. Delete Task
+**DELETE** `/tasks/:id`
 
-```
-POST http://localhost:3000/api/tasks
-Authorization: Bearer YOUR_JWT_TOKEN
-Content-Type: multipart/form-data
+#### 6. Download File
+**GET** `/tasks/:id/files/:fileName`
 
-Form Data:
-- title: "My First Task"
-- description: "This is a test task"
-- dueDate: "2024-12-31"
-- status: "pending"
-- file: [select a file]
-```
+## Postman Collection
 
-### 4. Get Tasks with Pagination
+Import the `TaskManagerAPI.postman_collection.json` file into Postman for easy testing.
 
-```
-GET http://localhost:3000/api/tasks?page=1&limit=5&status=pending
-Authorization: Bearer YOUR_JWT_TOKEN
-```
+### How to use the Postman collection:
 
-### 5. Get Tasks with Cursor Pagination
-
-```
-GET http://localhost:3000/api/tasks?cursor=10&limit=5
-Authorization: Bearer YOUR_JWT_TOKEN
-```
-
-### 6. Update Task
-
-```
-PUT http://localhost:3000/api/tasks/1
-Authorization: Bearer YOUR_JWT_TOKEN
-Content-Type: multipart/form-data
-
-Form Data:
-- title: "Updated Task Title"
-- status: "completed"
-```
-
-### 7. Get User Profile
-
-```
-GET http://localhost:3000/api/auth/profile
-Authorization: Bearer YOUR_JWT_TOKEN
-```
-
-### 8. Get Task Statistics
-
-```
-GET http://localhost:3000/api/tasks/stats
-Authorization: Bearer YOUR_JWT_TOKEN
-```
+1. Import the JSON file into Postman
+2. Set the `baseUrl` variable to `http://localhost:3000`
+3. Run the "Signup" request to create a user
+4. Run the "Login" request and copy the token from the response
+5. Set the `token` variable with the copied token
+6. Now you can test all other endpoints
 
 ## Database Schema
 
 ### Users Table
 ```sql
-CREATE TABLE users (
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  username VARCHAR(50) UNIQUE NOT NULL,
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL,
   email VARCHAR(100) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 ```
 
 ### Tasks Table
 ```sql
-CREATE TABLE tasks (
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  title VARCHAR(200) NOT NULL,
+CREATE TABLE IF NOT EXISTS tasks (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  title VARCHAR(100) NOT NULL,
   description TEXT,
-  due_date DATE,
+  dueDate DATE,
   status ENUM('pending', 'completed') DEFAULT 'pending',
-  file_path VARCHAR(500),
-  user_id INT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  filePaths JSON,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );
 ```
 
 ## File Upload
 
-- **Supported formats**: Images (JPG, PNG, GIF), PDF, Word documents, Excel files, text files
-- **File size limit**: 10MB per file
+- **Supported formats**: Images (JPG, PNG, GIF), PDF, Word documents, text files
+- **File size limit**: 5MB per file
+- **Maximum files**: 5 files per task
 - **Storage**: Files are stored in the `/uploads` directory
 - **Naming**: Files are renamed with timestamp and random suffix for uniqueness
-- **Access**: Files can be downloaded via `/api/tasks/:id/download` or accessed directly at `/uploads/filename`
+- **Access**: Files can be downloaded via `/tasks/:id/files/:fileName`
 
 ## Error Handling
 
@@ -394,15 +312,24 @@ All API responses follow a consistent format:
 - **Input Validation**: Basic validation for required fields and data types
 - **File Type Validation**: Only allowed file types can be uploaded
 - **User Isolation**: Tasks are strictly tied to authenticated users
+- **Hard Delete**: Tasks are permanently deleted from the database
+
+## Logging
+
+The application uses Winston for logging:
+- Logs are stored in the `logs/` directory
+- Console logging in development mode
+- File logging for errors and combined logs
+- Request logging for all API calls
 
 ## Development Notes
 
 - Uses plain MySQL queries (no ORM)
-- Follows layered architecture: Routes → Controllers → Services → Models
-- Implements both cursor-based and page-based pagination
-- Supports hard delete for tasks
+- Follows layered architecture: Routes → Controllers → Services → Database
+- Implements cursor-based pagination for better performance
+- Supports multiple file uploads per task
 - Files are automatically deleted when tasks are deleted
-- Token refresh endpoint available for extending sessions
+- JWT tokens expire after 1 hour as per requirements
 
 ## License
 

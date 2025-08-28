@@ -19,7 +19,7 @@ class AuthService {
     }
     
     // Check if user already exists
-    const existingUser = await this.findByEmailOrUsername(email, username);
+    const existingUser = await this.findByEmailOrUsername(email);
     if (existingUser) {
       throw new Error('User with this email or username already exists');
     }
@@ -86,7 +86,8 @@ class AuthService {
 
   static async findById(userId) {
     const [rows] = await db.execute(
-      'SELECT id, username, email, createdAt, updatedAt FROM users WHERE id = ?',
+      // Select only columns that are guaranteed to exist across schemas
+      'SELECT id, username, email FROM users WHERE id = ?',
       [userId]
     );
     return rows[0] || null;
@@ -94,7 +95,8 @@ class AuthService {
 
   static async findByEmailOrUsername(identifier) {
     const [rows] = await db.execute(
-      'SELECT id, username, email, password, createdAt, updatedAt FROM users WHERE email = ? OR username = ?',
+      // Select only essential fields to avoid schema differences
+      'SELECT id, username, email, password FROM users WHERE email = ? OR username = ?',
       [identifier, identifier]
     );
     return rows[0] || null;

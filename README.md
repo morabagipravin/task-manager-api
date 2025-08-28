@@ -2,6 +2,8 @@
 
 A comprehensive REST API for task management with JWT authentication, file uploads, and MySQL database integration.
 
+![Task Manager API Banner](images/banner.png)
+
 ## Features
 
 - 🔐 **JWT Authentication** (1-hour token expiry)
@@ -14,6 +16,8 @@ A comprehensive REST API for task management with JWT authentication, file uploa
 - ✅ **Input Validation**
 - 📝 **Winston Logging**
 
+![Features Overview](images/features.png)
+
 ## Tech Stack
 
 - **Runtime**: Node.js
@@ -24,6 +28,8 @@ A comprehensive REST API for task management with JWT authentication, file uploa
 - **File Uploads**: Multer
 - **Logging**: Winston
 - **CORS**: cors middleware
+
+![Tech Stack](images/tech-stack.png)
 
 ## Project Structure
 
@@ -48,11 +54,14 @@ task-manager-api/
 │   ├── tasks.sql
 │   ├── create_tables.sql
 ├── uploads/
+├── images/
 ├── app.js
 ├── package.json
 ├── .env
 ├── README.md
 ```
+
+![Project Structure](images/project-structure.png)
 
 ## Installation & Setup
 
@@ -63,6 +72,8 @@ git clone <repository-url>
 cd task-manager-api
 npm install
 ```
+
+![Installation Steps](images/installation.png)
 
 ### 2. Environment Variables
 
@@ -76,6 +87,8 @@ DB_NAME=task_manager
 JWT_SECRET=your_jwt_secret
 PORT=3000
 ```
+
+![Environment Setup](images/env-setup.png)
 
 ### 3. Database Setup
 
@@ -115,12 +128,17 @@ A ready-to-use Postman collection is included in the repo: `TaskManagerAPI.postm
 - Import it into Postman and set `baseUrl` to `http://localhost:3000`.
 - Use it to test all API endpoints quickly.
 
+
 ## API Endpoints
 
 ### Authentication Endpoints
 
 #### 1. Signup User
 **POST** `/auth/signup`
+
+
+![Signup API](images/signUp.png)
+![Signup API Mysql](images/mysqlSignUp.png)
 
 ```json
 {
@@ -151,6 +169,8 @@ A ready-to-use Postman collection is included in the repo: `TaskManagerAPI.postm
 #### 2. Login User
 **POST** `/auth/login`
 
+![Login API](images/login.png)
+
 ```json
 {
   "email": "test@example.com",
@@ -160,12 +180,15 @@ A ready-to-use Postman collection is included in the repo: `TaskManagerAPI.postm
 
 *Note: You can also use username instead of email*
 
+
 ### Task Management Endpoints
 
 *All task endpoints require authentication header: `Authorization: Bearer <token>`*
 
 #### 1. Create Task
 **POST** `/tasks`
+
+![Create Task](images/createTask.png)
 
 **JSON Body:**
 ```json
@@ -186,6 +209,8 @@ status: "pending"
 files: [file1, file2, ...] (max 5 files)
 ```
 
+![Create Task with Files](images/createTaskWithFiles.png)
+
 #### 2. Get All Tasks (Cursor-based Pagination)
 **GET** `/tasks`
 
@@ -193,6 +218,9 @@ files: [file1, file2, ...] (max 5 files)
 - `cursor`: Last task ID from previous page
 - `limit`: Items per page (max: 100, default: 10)
 - `status`: Filter by status (`pending` or `completed`)
+
+![Get Task with Cursor](images/getTaskWithCursor.png)
+![Get Task by Status](images/getTaskByStatus.png)
 
 **Example:** `/tasks?cursor=25&limit=10&status=completed`
 
@@ -214,8 +242,12 @@ files: [file1, file2, ...] (max 5 files)
 #### 3. Get Single Task
 **GET** `/tasks/:id`
 
+![Get Task by ID](images/getTaskById.png)
+
 #### 4. Update Task
 **PUT** `/tasks/:id`
+
+![Update Task](images/updateTask.png)
 
 **JSON Body:**
 ```json
@@ -226,6 +258,8 @@ files: [file1, file2, ...] (max 5 files)
 }
 ```
 
+![Update Task with Files](images/updateTaskWithFiles.png)
+
 **Form Data (with files):**
 ```
 title: "Updated task title"
@@ -234,11 +268,15 @@ status: "completed"
 files: [file1, file2, ...] (max 5 files)
 ```
 
+
 #### 5. Delete Task
 **DELETE** `/tasks/:id`
 
+![Delete Task API](images/deteleTask.png)
+
 #### 6. Download File
 **GET** `/tasks/:id/download?file=FILENAME.EXT`
+
 
 ## Postman Collection (How to Use)
 
@@ -248,6 +286,7 @@ files: [file1, file2, ...] (max 5 files)
 4. Run the "Login" request and copy the token
 5. Set the `token` variable
 6. Test all other endpoints
+
 
 ## Database Schema
 
@@ -288,6 +327,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 - **Naming**: Files are renamed with timestamp and random suffix for uniqueness
 - **Access**: Files can be downloaded via `/tasks/:id/download?file=FILENAME.EXT`
 
+
 ## Error Handling
 
 All API responses follow a consistent format:
@@ -309,6 +349,7 @@ All API responses follow a consistent format:
 }
 ```
 
+
 ## Security Features
 
 - **Password Hashing**: All passwords are hashed using bcryptjs with salt rounds of 10
@@ -317,6 +358,7 @@ All API responses follow a consistent format:
 - **File Type Validation**: Only allowed file types can be uploaded
 - **User Isolation**: Tasks are strictly tied to authenticated users
 - **Hard Delete**: Tasks are permanently deleted from the database
+
  
 ## Logging
  
@@ -325,6 +367,7 @@ The application uses Winston for logging:
 - Console logging in development mode
 - File logging for errors and combined logs
 - Request logging for all API calls
+
  
 ## Development Notes
  
@@ -334,7 +377,3 @@ The application uses Winston for logging:
 - Supports multiple file uploads per task
 - Files are automatically deleted when tasks are deleted
 - JWT tokens expire after 1 hour as per requirements
- 
-## License
-
-MIT License

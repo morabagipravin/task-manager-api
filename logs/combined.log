@@ -140,3 +140,40 @@
 {"ip":"::1","level":"info","message":"GET /favicon.ico","service":"task-manager-api","timestamp":"2025-08-28 18:13:48","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
 {"ip":"::1","level":"info","message":"POST /auth/signup","service":"task-manager-api","timestamp":"2025-08-28 21:21:21","userAgent":"PostmanRuntime/7.45.0"}
 {"email":"john@example.com","level":"info","message":"User registered successfully","service":"task-manager-api","timestamp":"2025-08-28 21:21:22"}
+{"level":"info","message":"Server is running on port 3000","service":"task-manager-api","timestamp":"2025-08-28 21:27:22"}
+{"level":"info","message":"Server is running on port 3000","service":"task-manager-api","timestamp":"2025-08-28 21:31:26"}
+{"ip":"::1","level":"info","message":"POST /auth/signup","service":"task-manager-api","timestamp":"2025-08-28 21:31:29","userAgent":"PostmanRuntime/7.45.0"}
+{"level":"error","message":"Registration failed: User with this email or username already exists","service":"task-manager-api","stack":"Error: User with this email or username already exists\n    at AuthService.signup (C:\\espy\\Assignments\\Boostmychild\\task-manager-api\\services\\authService.js:24:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async signup (C:\\espy\\Assignments\\Boostmychild\\task-manager-api\\controllers\\authController.js:9:22)","timestamp":"2025-08-28 21:31:29"}
+{"ip":"::1","level":"info","message":"POST /auth/signup","service":"task-manager-api","timestamp":"2025-08-28 21:32:57","userAgent":"PostmanRuntime/7.45.0"}
+{"level":"error","message":"Registration failed: User with this email or username already exists","service":"task-manager-api","stack":"Error: User with this email or username already exists\n    at AuthService.signup (C:\\espy\\Assignments\\Boostmychild\\task-manager-api\\services\\authService.js:24:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async signup (C:\\espy\\Assignments\\Boostmychild\\task-manager-api\\controllers\\authController.js:9:22)","timestamp":"2025-08-28 21:32:57"}
+{"ip":"::1","level":"info","message":"POST /auth/signup","service":"task-manager-api","timestamp":"2025-08-28 21:33:32","userAgent":"PostmanRuntime/7.45.0"}
+{"email":"test1@example.com","level":"info","message":"User registered successfully","service":"task-manager-api","timestamp":"2025-08-28 21:33:32"}
+{"ip":"::1","level":"info","message":"POST /auth/login","service":"task-manager-api","timestamp":"2025-08-28 21:34:49","userAgent":"PostmanRuntime/7.45.0"}
+{"level":"error","message":"Login failed: Invalid credentials","service":"task-manager-api","stack":"Error: Invalid credentials\n    at AuthService.login (C:\\espy\\Assignments\\Boostmychild\\task-manager-api\\services\\authService.js:63:13)\n    at async login (C:\\espy\\Assignments\\Boostmychild\\task-manager-api\\controllers\\authController.js:43:22)","timestamp":"2025-08-28 21:34:49"}
+{"level":"info","message":"Server is running on port 3000","service":"task-manager-api","timestamp":"2025-08-28 21:38:08"}
+{"ip":"::1","level":"info","message":"POST /auth/signup","service":"task-manager-api","timestamp":"2025-08-28 21:38:23","userAgent":"PostmanRuntime/7.45.0"}
+{"email":"test@example.com","level":"info","message":"User registered successfully","service":"task-manager-api","timestamp":"2025-08-28 21:38:23"}
+{"ip":"::1","level":"info","message":"POST /auth/login","service":"task-manager-api","timestamp":"2025-08-28 21:39:19","userAgent":"PostmanRuntime/7.45.0"}
+{"identifier":"test@example.com","level":"info","message":"User logged in successfully","service":"task-manager-api","timestamp":"2025-08-28 21:39:19"}
+{"ip":"::1","level":"info","message":"POST /tasks","service":"task-manager-api","timestamp":"2025-08-28 21:40:20","userAgent":"PostmanRuntime/7.45.0"}
+{"level":"info","message":"Task created successfully","service":"task-manager-api","taskId":2,"timestamp":"2025-08-28 21:40:20","userId":3}
+{"ip":"::1","level":"info","message":"POST /tasks","service":"task-manager-api","timestamp":"2025-08-28 21:42:23","userAgent":"PostmanRuntime/7.45.0"}
+{"level":"info","message":"Task created successfully","service":"task-manager-api","taskId":3,"timestamp":"2025-08-28 21:42:23","userId":3}
+{"ip":"::1","level":"info","message":"GET /tasks?cursor=1&limit=5","service":"task-manager-api","timestamp":"2025-08-28 21:43:12","userAgent":"PostmanRuntime/7.45.0"}
+{"count":2,"level":"info","message":"Tasks retrieved successfully","service":"task-manager-api","timestamp":"2025-08-28 21:43:12","userId":3}
+{"ip":"::1","level":"info","message":"GET /tasks?status=pending&limit=10","service":"task-manager-api","timestamp":"2025-08-28 21:43:45","userAgent":"PostmanRuntime/7.45.0"}
+{"count":2,"level":"info","message":"Tasks retrieved successfully","service":"task-manager-api","timestamp":"2025-08-28 21:43:45","userId":3}
+{"ip":"::1","level":"info","message":"GET /tasks/1","service":"task-manager-api","timestamp":"2025-08-28 21:44:07","userAgent":"PostmanRuntime/7.45.0"}
+{"ip":"::1","level":"info","message":"GET /tasks/1","service":"task-manager-api","timestamp":"2025-08-28 21:44:19","userAgent":"PostmanRuntime/7.45.0"}
+{"level":"error","message":"Task retrieval failed: Task not found","service":"task-manager-api","stack":"Error: Task not found\n    at TaskService.getTaskById (C:\\espy\\Assignments\\Boostmychild\\task-manager-api\\services\\taskService.js:75:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async getTaskById (C:\\espy\\Assignments\\Boostmychild\\task-manager-api\\controllers\\taskController.js:59:20)","timestamp":"2025-08-28 21:44:19"}
+{"ip":"::1","level":"info","message":"GET /tasks/2","service":"task-manager-api","timestamp":"2025-08-28 21:44:24","userAgent":"PostmanRuntime/7.45.0"}
+{"ip":"::1","level":"info","message":"PUT /tasks/2","service":"task-manager-api","timestamp":"2025-08-28 21:44:48","userAgent":"PostmanRuntime/7.45.0"}
+{"ip":"::1","level":"info","message":"PUT /tasks/2","service":"task-manager-api","timestamp":"2025-08-28 21:45:08","userAgent":"PostmanRuntime/7.45.0"}
+{"ip":"::1","level":"info","message":"PUT /tasks/2","service":"task-manager-api","timestamp":"2025-08-28 21:45:23","userAgent":"PostmanRuntime/7.45.0"}
+{"level":"info","message":"Task updated successfully","service":"task-manager-api","taskId":"2","timestamp":"2025-08-28 21:45:23","userId":3}
+{"ip":"::1","level":"info","message":"PUT /tasks/3","service":"task-manager-api","timestamp":"2025-08-28 21:45:53","userAgent":"PostmanRuntime/7.45.0"}
+{"level":"info","message":"Task updated successfully","service":"task-manager-api","taskId":"3","timestamp":"2025-08-28 21:45:53","userId":3}
+{"ip":"::1","level":"info","message":"GET /tasks/2/files/KisanovaDB.txt","service":"task-manager-api","timestamp":"2025-08-28 21:46:48","userAgent":"PostmanRuntime/7.45.0"}
+{"ip":"::1","level":"info","message":"DELETE /tasks/2","service":"task-manager-api","timestamp":"2025-08-28 21:47:05","userAgent":"PostmanRuntime/7.45.0"}
+{"ip":"::1","level":"info","message":"DELETE /tasks/2","service":"task-manager-api","timestamp":"2025-08-28 21:47:15","userAgent":"PostmanRuntime/7.45.0"}
+{"level":"info","message":"Task deleted successfully","service":"task-manager-api","taskId":"2","timestamp":"2025-08-28 21:47:15","userId":3}

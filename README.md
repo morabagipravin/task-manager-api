@@ -46,6 +46,7 @@ task-manager-api/
 ├── migrations/
 │   ├── users.sql
 │   ├── tasks.sql
+│   ├── create_tables.sql
 ├── uploads/
 ├── app.js
 ├── package.json
@@ -78,15 +79,16 @@ PORT=3000
 
 ### 3. Database Setup
 
-#### Run SQL Migration Scripts
+You can run migrations in either of the following ways:
 
-1. **Create users table:**
+- Single command (creates DB and both tables):
 ```bash
-mysql -u root -p < migrations/users.sql
+mysql -u root -p < migrations/create_tables.sql
 ```
 
-2. **Create tasks table:**
+- Run individual table scripts:
 ```bash
+mysql -u root -p < migrations/users.sql
 mysql -u root -p < migrations/tasks.sql
 ```
 
@@ -107,6 +109,12 @@ npm run dev
 
 Server will run on `http://localhost:3000`
 
+## Postman Collection
+
+A ready-to-use Postman collection is included in the repo: `TaskManagerAPI.postman_collection.json`.
+- Import it into Postman and set `baseUrl` to `http://localhost:3000`.
+- Use it to test all API endpoints quickly.
+
 ## API Endpoints
 
 ### Authentication Endpoints
@@ -116,8 +124,8 @@ Server will run on `http://localhost:3000`
 
 ```json
 {
-  "username": "johndoe",
-  "email": "john@example.com",
+  "username": "testuser",
+  "email": "test@example.com",
   "password": "password123"
 }
 ```
@@ -130,8 +138,8 @@ Server will run on `http://localhost:3000`
   "data": {
     "user": {
       "id": 1,
-      "username": "johndoe",
-      "email": "john@example.com",
+      "username": "testuser",
+      "email": "test@example.com",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z"
     },
@@ -145,7 +153,7 @@ Server will run on `http://localhost:3000`
 
 ```json
 {
-  "email": "john@example.com",
+  "email": "test@example.com",
   "password": "password123"
 }
 ```
@@ -230,20 +238,16 @@ files: [file1, file2, ...] (max 5 files)
 **DELETE** `/tasks/:id`
 
 #### 6. Download File
-**GET** `/tasks/:id/files/:fileName`
+**GET** `/tasks/:id/download?file=FILENAME.EXT`
 
-## Postman Collection
+## Postman Collection (How to Use)
 
-Import the `TaskManagerAPI.postman_collection.json` file into Postman for easy testing.
-
-### How to use the Postman collection:
-
-1. Import the JSON file into Postman
-2. Set the `baseUrl` variable to `http://localhost:3000`
-3. Run the "Signup" request to create a user
-4. Run the "Login" request and copy the token from the response
-5. Set the `token` variable with the copied token
-6. Now you can test all other endpoints
+1. Import `TaskManagerAPI.postman_collection.json`
+2. Set `baseUrl` to `http://localhost:3000`
+3. Run the "Signup" request
+4. Run the "Login" request and copy the token
+5. Set the `token` variable
+6. Test all other endpoints
 
 ## Database Schema
 
@@ -282,7 +286,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 - **Maximum files**: 5 files per task
 - **Storage**: Files are stored in the `/uploads` directory
 - **Naming**: Files are renamed with timestamp and random suffix for uniqueness
-- **Access**: Files can be downloaded via `/tasks/:id/files/:fileName`
+- **Access**: Files can be downloaded via `/tasks/:id/download?file=FILENAME.EXT`
 
 ## Error Handling
 
@@ -313,24 +317,24 @@ All API responses follow a consistent format:
 - **File Type Validation**: Only allowed file types can be uploaded
 - **User Isolation**: Tasks are strictly tied to authenticated users
 - **Hard Delete**: Tasks are permanently deleted from the database
-
+ 
 ## Logging
-
+ 
 The application uses Winston for logging:
 - Logs are stored in the `logs/` directory
 - Console logging in development mode
 - File logging for errors and combined logs
 - Request logging for all API calls
-
+ 
 ## Development Notes
-
+ 
 - Uses plain MySQL queries (no ORM)
 - Follows layered architecture: Routes → Controllers → Services → Database
 - Implements cursor-based pagination for better performance
 - Supports multiple file uploads per task
 - Files are automatically deleted when tasks are deleted
 - JWT tokens expire after 1 hour as per requirements
-
+ 
 ## License
 
 MIT License

@@ -169,7 +169,24 @@ A ready-to-use Postman collection is included in the repo: `TaskManagerAPI.postm
 
 ### Task Management Endpoints
 
-*All task endpoints require authentication header: `Authorization: Bearer <token>`*
+## ⚠️ **IMPORTANT: Setting Authorization Header**
+
+**After logging in, you MUST set the Authorization header for all protected operations:**
+
+1. **Login first** using the "Login" request in Postman
+2. **Copy the token** from the response (it looks like: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`)
+3. **Set the Authorization header** in Postman:
+   - Key: `Authorization`
+   - Value: `Bearer YOUR_TOKEN_HERE`
+   - Replace `YOUR_TOKEN_HERE` with the actual token you received
+
+**Example:**
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTYzMjU0NzIwMCwiZXhwIjoxNjMyNTUwODAwfQ.example_signature
+```
+
+**All task endpoints require this header!** Without it, you'll get "Unauthorized" errors.
+
 
 #### 1. Create Task
 **POST** `/tasks`

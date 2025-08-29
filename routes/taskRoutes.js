@@ -5,13 +5,20 @@ const TaskController = require('../controllers/taskController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+const { uploadsDir } = require('../utils/fileHandler');
 
 const router = express.Router();
+
+// Ensure uploads directory exists in the correct location
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Configure multer for multiple file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);

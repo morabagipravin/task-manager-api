@@ -4,15 +4,15 @@ A comprehensive REST API for task management with JWT authentication, file uploa
 
 ## Features
 
-- 🔐 **JWT Authentication** (1-hour token expiry)
-- 👤 **User Management** (signup, login)
-- 📝 **Task Management** (CRUD operations with multiple file attachments)
-- 📄 **File Uploads** (using Multer with 5MB limit per file, max 5 files)
-- 🔍 **Cursor-based Pagination**
-- 🛡️ **Password Hashing** (bcryptjs)
-- 🗄️ **MySQL Database** with plain SQL queries
-- ✅ **Input Validation**
-- 📝 **Winston Logging**
+- **JWT Authentication** (1-hour token expiry)
+- **User Management** (signup, login)
+- **Task Management** (CRUD operations with multiple file attachments)
+- **File Uploads** (using Multer with 5MB limit per file, max 5 files)
+- **Cursor-based Pagination**
+- **Password Hashing** (bcryptjs)
+- **MySQL Database** with plain SQL queries
+- **Input Validation**
+- **Winston Logging**
 
 ## Tech Stack
 
